@@ -1,23 +1,54 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Code2, Users, PenTool, Megaphone, CheckCircle2, ArrowRight, Sparkles } from 'lucide-react'
 import { committeesData } from '../data/committeesData'
+import { fetchCommittees } from '../lib/websiteDataService'
 
 function getCommitteeIcon(id) {
   switch (id) {
     case 'technical-training':
+    case 'technical_lead':
       return Code2
     case 'organization-media':
+    case 'media_lead':
       return Users
     case 'graphic-design':
+    case 'design_lead':
       return PenTool
     case 'hr-pr-leadership':
+    case 'pr_hr':
       return Megaphone
     default:
       return Sparkles
   }
 }
 
-export default function CommitteesPage({ onNavigateHome }) {
+export default function CommitteesPage({ onNavigateHome, onOpenJoinModal }) {
+  const [committees, setCommittees] = useState(committeesData)
+
+  useEffect(() => {
+    fetchCommittees().then(data => {
+      if (Array.isArray(data) && data.length > 0) {
+        // Map database schema to display format if needed
+        const mapped = data.map((item, idx) => {
+          const fallback = committeesData.find(c => c.id === item.id || c.name.toLowerCase() === (item.name || '').toLowerCase())
+          return {
+            id: item.id || `committee-${idx}`,
+            name: item.name || fallback?.name || "Committee",
+            tag: item.tag || fallback?.tag || (item.name ? item.name.toUpperCase() : "TEAM"),
+            description: item.description || fallback?.description || "Dedicated team supporting ICPC HIMIT.",
+            accentColor: item.accent_color || fallback?.accentColor || (idx % 2 === 0 ? "#f5ba13" : "#38bdf8"),
+            responsibilities: Array.isArray(item.responsibilities) && item.responsibilities.length > 0
+              ? item.responsibilities
+              : fallback?.responsibilities || [
+                  "Organize community activities and sessions",
+                  "Support students in competitive programming"
+                ]
+          }
+        })
+        setCommittees(mapped)
+      }
+    }).catch(() => {})
+  }, [])
   return (
     <div className="min-h-screen bg-[#050811] text-slate-100 py-12 md:py-20 bg-stars">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -31,7 +62,7 @@ export default function CommitteesPage({ onNavigateHome }) {
           <h1 className="font-pixel text-3xl sm:text-5xl lg:text-6xl font-bold tracking-normal text-white leading-tight">
             Meet Our Teams<br />
             <span className="text-[#f5ba13] drop-shadow-[0_0_20px_rgba(245,186,19,0.4)]">
-              Behind ICPC HIMT
+              Behind ICPC HIMIT
             </span>
           </h1>
 
@@ -43,7 +74,7 @@ export default function CommitteesPage({ onNavigateHome }) {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {committeesData.map((committee) => {
+          {committees.map((committee) => {
             const IconComponent = getCommitteeIcon(committee.id)
             return (
               <div

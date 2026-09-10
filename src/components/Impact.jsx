@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { getLocalWebsiteData, fetchWebsiteData, subscribeToWebsiteData } from '../lib/websiteDataService.js'
 
 function UsersIcon({ className }) {
@@ -42,6 +42,83 @@ function TrophyIcon({ className }) {
       <path d="M10 14.66V17c0 .55-.45 1-1 1H7v4h10v-4h-2c-.55 0-1-.45-1-1v-2.34" />
       <path d="M6 4h12a2 2 0 0 1 2 2v3a6 6 0 0 1-6 6h0a6 6 0 0 1-6-6V6a2 2 0 0 1 2-2Z" />
     </svg>
+  )
+}
+
+function AnimatedCounter({ value, duration = 1800 }) {
+  const [displayValue, setDisplayValue] = useState('0')
+  const [isDone, setIsDone] = useState(false)
+  const elementRef = useRef(null)
+
+  useEffect(() => {
+    // Parse number and suffix from string e.g. "15,000+" -> number: 15000, suffix: "+"
+    const cleaned = String(value || '0').trim()
+    const numericMatch = cleaned.replace(/,/g, '').match(/[\d.]+/)
+    const targetNumber = numericMatch ? parseFloat(numericMatch[0]) : 0
+    const prefix = cleaned.startsWith('+') ? '+' : ''
+    const suffix = cleaned.endsWith('+') ? '+' : cleaned.endsWith('%') ? '%' : ''
+
+    let hasStarted = false
+    let animationFrameId
+
+    const startCounting = () => {
+      if (hasStarted) return
+      hasStarted = true
+      setIsDone(false)
+      const startTime = performance.now()
+
+      const animate = (currentTime) => {
+        const elapsed = currentTime - startTime
+        const progress = Math.min(elapsed / duration, 1)
+        // Cubic ease out for smooth decelerating counter
+        const easeOut = 1 - Math.pow(1 - progress, 3)
+        const currentNum = Math.floor(easeOut * targetNumber)
+
+        const formatted = currentNum.toLocaleString('en-US')
+        setDisplayValue(`${prefix}${formatted}${suffix}`)
+
+        if (progress < 1) {
+          animationFrameId = requestAnimationFrame(animate)
+        } else {
+          setDisplayValue(cleaned)
+          setIsDone(true)
+        }
+      }
+
+      animationFrameId = requestAnimationFrame(animate)
+    }
+
+    // Use IntersectionObserver to start counting when scrolled into view
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            startCounting()
+          }
+        })
+      },
+      { threshold: 0.2 }
+    )
+
+    if (elementRef.current) {
+      observer.observe(elementRef.current)
+    }
+
+    return () => {
+      if (animationFrameId) cancelAnimationFrame(animationFrameId)
+      observer.disconnect()
+    }
+  }, [value, duration])
+
+  return (
+    <span 
+      ref={elementRef}
+      className={`inline-block tabular-nums transition-all duration-300 ${
+        isDone ? 'scale-100' : 'animate-pulse'
+      }`}
+    >
+      {displayValue}
+    </span>
   )
 }
 
@@ -125,7 +202,7 @@ export default function Impact() {
                     </div>
                     
                     <div className="font-pixel text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-normal group-hover:text-[#f5ba13] transition-colors duration-300">
-                      {stat.value}
+                      <AnimatedCounter value={stat.value} duration={1600 + idx * 250} />
                     </div>
 
                     <div className="text-xs sm:text-sm font-sans text-slate-400 font-medium leading-snug">
@@ -143,3 +220,4 @@ export default function Impact() {
     </section>
   )
 }
+

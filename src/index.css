@@ -1,12 +1,20 @@
 @import "tailwindcss";
 
 @theme {
-  --font-pixel: "Pixelify Sans", monospace, sans-serif;
+  --font-pixel: "Oxanium", "Chakra Petch", "Space Grotesk", "Pixelify Sans", sans-serif;
+  --font-gaming: "Chakra Petch", "Oxanium", sans-serif;
+  --font-arcade: "Pixelify Sans", monospace, sans-serif;
   --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: "JetBrains Mono", "Space Mono", monospace;
   --font-hand: "Caveat", cursive;
   --color-primary-gold: #f5ba13;
   --color-dark-bg: #05070d;
+}
+
+html {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
@@ -18,6 +26,16 @@ body {
 
 .font-pixel {
   font-family: var(--font-pixel);
+  letter-spacing: 0.015em;
+}
+
+.font-gaming {
+  font-family: var(--font-gaming);
+  letter-spacing: 0.025em;
+}
+
+.font-arcade {
+  font-family: var(--font-arcade);
 }
 
 .font-mono {
@@ -77,6 +95,15 @@ body {
 
 .animate-blink {
   animation: blink-cursor 1s step-start infinite;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.4s ease-out forwards;
 }
 
 .animate-fade-in {

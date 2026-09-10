@@ -27,7 +27,7 @@ export default function CtaBanner() {
             </h2>
 
             <p className="text-slate-300/90 text-sm sm:text-base leading-relaxed max-w-md">
-              Start training, meet amazing people, and take your place in the ICPC HIMT journey.
+              Start training, meet amazing people, and take your place in the ICPC HIMIT journey.
             </p>
 
             <div className="pt-2">

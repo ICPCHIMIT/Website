@@ -212,7 +212,7 @@ export default function TeamRegisterPage({ onNavigateHome }) {
           <h1 className="font-pixel text-2xl sm:text-5xl font-bold tracking-normal text-white leading-tight">
             Register Your 3-Member Team<br />
             <span className="text-[#f5ba13] drop-shadow-[0_0_20px_rgba(245,186,19,0.4)]">
-              ICPC HIMT Contests
+              ICPC HIMIT Contests
             </span>
           </h1>
 

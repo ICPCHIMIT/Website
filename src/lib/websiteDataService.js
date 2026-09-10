@@ -476,3 +476,25 @@ export function subscribeToUpcomingEventData(callback) {
     window.removeEventListener('storage', handler)
   }
 }
+
+export async function fetchCommittees() {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+  const supabaseKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY
+
+  if (supabaseUrl && supabaseKey) {
+    try {
+      const res = await fetch(`${supabaseUrl.replace(/\/$/, '')}/rest/v1/committees?select=*&order=name.asc`, {
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`
+        }
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (Array.isArray(data) && data.length > 0) return data
+      }
+    } catch (e) {}
+  }
+  return null
+}
+

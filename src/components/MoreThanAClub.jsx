@@ -28,6 +28,84 @@ function FlagIcon({ className }) {
   )
 }
 
+function AnimatedPillarsBadge() {
+  const [activeStep, setActiveStep] = React.useState(0)
+
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveStep((prev) => (prev + 1) % 4)
+    }, 1800)
+    return () => clearInterval(timer)
+  }, [])
+
+  const words = [
+    { text: 'PEOPLE —', color: 'text-[#f5ba13]' },
+    { text: 'PROBLEMS', color: 'text-[#38bdf8]' },
+    { text: 'PROGRESS', color: 'text-[#c084fc]' },
+    { text: 'TOGETHER', color: 'text-[#f5ba13]' },
+  ]
+
+  const getCellClass = (cellIndex) => {
+    let isActive = false
+    let isSecondary = false
+
+    if (activeStep === 0) {
+      if (cellIndex === 1) isActive = true
+      if (cellIndex === 0 || cellIndex === 2) isSecondary = true
+    } else if (activeStep === 1) {
+      if (cellIndex === 3 || cellIndex === 5) isActive = true
+      if (cellIndex === 4) isSecondary = true
+    } else if (activeStep === 2) {
+      if (cellIndex === 7) isActive = true
+      if (cellIndex === 6 || cellIndex === 8) isSecondary = true
+    } else if (activeStep === 3) {
+      if (cellIndex === 4 || cellIndex === 1 || cellIndex === 3 || cellIndex === 5 || cellIndex === 7) isActive = true
+    }
+
+    if (isActive) {
+      return "bg-[#f5ba13] rounded-xs shadow-[0_0_14px_rgba(245,186,19,0.95)] scale-110 border border-[#fde047] transition-all duration-500"
+    }
+    if (isSecondary) {
+      return "bg-[#38bdf8]/70 rounded-xs shadow-[0_0_8px_rgba(56,189,248,0.6)] border border-[#38bdf8]/40 transition-all duration-500"
+    }
+    return "bg-[#1f1a0e] border border-[#f5ba13]/20 rounded-xs transition-all duration-500"
+  }
+
+  return (
+    <div className="flex flex-col">
+      <div className="grid grid-cols-3 gap-1.5 w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
+        {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((idx) => (
+          <div key={idx} className={getCellClass(idx)} />
+        ))}
+      </div>
+
+      <div className="flex items-stretch gap-2.5 mt-2.5 pl-1 sm:pl-2">
+        <div className="w-[2px] bg-gradient-to-b from-[#f5ba13] via-[#38bdf8] to-[#f5ba13] self-stretch min-h-[48px] rounded-full shadow-[0_0_8px_rgba(245,186,19,0.4)]" />
+        <div className="font-mono text-[9px] sm:text-[11px] font-bold tracking-widest leading-tight space-y-0.5">
+          {words.map((item, wIdx) => {
+            const isCurrent = activeStep === wIdx
+            return (
+              <div 
+                key={wIdx}
+                className={`transition-all duration-300 flex items-center gap-1 ${
+                  isCurrent 
+                    ? `${item.color} font-extrabold translate-x-1 drop-shadow-[0_0_8px_currentColor]`
+                    : 'text-slate-400/80 hover:text-slate-200'
+                }`}
+              >
+                <span>{item.text}</span>
+                {isCurrent && (
+                  <span className="text-[#f5ba13] animate-blink font-black">_</span>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function MoreThanAClub() {
   const pillars = [
     {
@@ -64,32 +142,8 @@ export default function MoreThanAClub() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
               
-              <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 p-3 sm:p-4 rounded-xl bg-black/60 backdrop-blur-sm border border-white/10 transition-all duration-300 hover:border-[#f5ba13]/40 max-w-[calc(100%-2rem)]">
-                <div className="flex flex-col">
-                  <div className="grid grid-cols-3 gap-1 w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
-                    <div />
-                    <div className="bg-[#5c4a1e] border border-[#f5ba13]/25 rounded-xs" />
-                    <div />
-
-                    <div className="bg-[#5c4a1e] border border-[#f5ba13]/25 rounded-xs" />
-                    <div />
-                    <div className="bg-[#f5ba13] rounded-xs shadow-[0_0_12px_rgba(245,186,19,0.7)]" />
-
-                    <div />
-                    <div className="bg-[#5c4a1e] border border-[#f5ba13]/25 rounded-xs" />
-                    <div />
-                  </div>
-
-                  <div className="flex items-stretch gap-2.5 mt-2 pl-3 sm:pl-4">
-                    <div className="w-[1.5px] bg-white/20 self-stretch min-h-[44px]" />
-                    <div className="font-mono text-[9px] sm:text-[11px] font-bold tracking-widest text-slate-300 leading-tight">
-                      <div>PEOPLE —</div>
-                      <div>PROBLEMS</div>
-                      <div>PROGRESS</div>
-                      <div>TOGETHER</div>
-                    </div>
-                  </div>
-                </div>
+              <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 p-3 sm:p-4 rounded-xl bg-black/75 backdrop-blur-md border border-white/15 transition-all duration-300 hover:border-[#f5ba13]/50 shadow-[0_0_25px_rgba(0,0,0,0.8)] max-w-[calc(100%-2rem)]">
+                <AnimatedPillarsBadge />
               </div>
             </div>
           </div>

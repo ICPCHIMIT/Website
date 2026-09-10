@@ -836,7 +836,7 @@ export default function VolunteerRegisterPage({ onNavigateHome, onNavigateCommit
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. tourist / Mohamed_HIMT"
+                  placeholder="e.g. tourist / Mohamed_HIMIT"
                   value={formData.codeforces}
                   onChange={(e) => updateField('codeforces', e.target.value)}
                   className="w-full px-4 py-3 rounded-xl bg-[#070b16] border border-white/10 text-sky-400 placeholder:text-slate-500 text-sm font-mono focus:outline-none focus:border-[#38bdf8] focus:ring-1 focus:ring-[#38bdf8] transition-all"
