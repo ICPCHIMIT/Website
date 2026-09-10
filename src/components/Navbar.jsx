@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import { Search, Menu, X } from 'lucide-react'
 
-export default function Navbar({ activePage, setActivePage }) {
 export default function Navbar({ activePage, setActivePage, onOpenJoinModal }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
@@ -30,12 +29,12 @@ export default function Navbar({ activePage, setActivePage, onOpenJoinModal }) {
             >
               <img 
                 src="/assets/logo.png" 
-                alt="ICPC HIMT Logo" 
+                alt="ICPC HIMIT Logo" 
                 className="w-10 h-10 object-contain drop-shadow-[0_0_8px_rgba(245,186,19,0.4)] transition-transform duration-300 group-hover:scale-105"
               />
               <div className="flex flex-col">
                 <span className="font-extrabold text-sm leading-tight tracking-wider text-white">ICPC</span>
-                <span className="font-bold text-xs leading-tight tracking-widest text-slate-300">HIMT</span>
+                <span className="font-bold text-xs leading-tight tracking-widest text-slate-300">HIMIT</span>
               </div>
             </button>
           </div>
@@ -79,15 +78,11 @@ export default function Navbar({ activePage, setActivePage, onOpenJoinModal }) {
             >
               <Search className="w-4 h-4" />
             </button>
-            <a
-              href="#join"
-              className="px-6 py-2.5 rounded-lg bg-[#f5ba13] hover:bg-[#eab308] text-black font-extrabold text-sm transition-all duration-200 shadow-[0_0_15px_rgba(245,186,19,0.35)] hover:shadow-[0_0_20px_rgba(245,186,19,0.55)] transform hover:-translate-y-0.5"
             <button
               onClick={onOpenJoinModal}
               className="px-6 py-2.5 rounded-lg bg-[#f5ba13] hover:bg-[#eab308] text-black font-extrabold text-sm transition-all duration-200 shadow-[0_0_15px_rgba(245,186,19,0.35)] hover:shadow-[0_0_20px_rgba(245,186,19,0.55)] transform hover:-translate-y-0.5 cursor-pointer"
             >
               Join Us
-            </a>
             </button>
           </div>
 
@@ -138,10 +133,6 @@ export default function Navbar({ activePage, setActivePage, onOpenJoinModal }) {
             )
           })}
           <div className="pt-4">
-            <a
-              href="#join"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block text-center w-full py-2.5 rounded-md bg-[#f5ba13] text-black font-bold text-base shadow-md"
             <button
               onClick={() => {
                 setMobileMenuOpen(false)
@@ -150,7 +141,6 @@ export default function Navbar({ activePage, setActivePage, onOpenJoinModal }) {
               className="block text-center w-full py-2.5 rounded-md bg-[#f5ba13] text-black font-bold text-base shadow-md cursor-pointer"
             >
               Join Us
-            </a>
             </button>
           </div>
         </div>

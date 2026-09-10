@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import { Plus } from 'lucide-react'
 import { Plus, ArrowRight } from 'lucide-react'
 
 export default function TheJourney() {
