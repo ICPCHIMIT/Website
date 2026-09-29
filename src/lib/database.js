@@ -1,4 +1,4 @@
-const SERVICE_ROLE_KEY_FALLBACK = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6eHZyeWZlY3puY3R6aGZiaXhoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NzMwMDQ3NywiZXhwIjoyMTAyODc2NDc3fQ.tO3oP3MCqilobIjzX2TYRqAYIOuMrkChRr7yHUEz_FI'
+const SERVICE_ROLE_KEY_FALLBACK = ''
 const SUPABASE_URL_FALLBACK = 'https://yzxvryfecznctzhfbixh.supabase.co'
 
 export async function submitMemberApplication(formData) {
