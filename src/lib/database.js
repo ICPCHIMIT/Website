@@ -1,5 +1,5 @@
-const SERVICE_ROLE_KEY_FALLBACK = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6eHZyeWZlY3puY3R6aGZiaXhoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NzMwMDQ3NywiZXhwIjoyMTAyODc2NDc3fQ.tO3oP3MCqilobIjzX2TYRqAYIOuMrkChRr7yHUEz_FI'
-const SUPABASE_URL_FALLBACK = 'https://yzxvryfecznctzhfbixh.supabase.co'
+const SERVICE_ROLE_KEY_FALLBACK = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhhcmV4YWN1bG10cWZwdHdraXV0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MDY3MjM3MCwiZXhwIjoyMTA2MjQ4MzcwfQ.pB--upfmKEQs90ZEugoMRmqL7rJPNoRDF2RUheb4KsQ'
+const SUPABASE_URL_FALLBACK = 'https://harexaculmtqfptwkiut.supabase.co'
 
 export async function submitMemberApplication(formData) {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || SUPABASE_URL_FALLBACK

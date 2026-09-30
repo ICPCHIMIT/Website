@@ -67,7 +67,7 @@ export default function Navbar({ activePage, setActivePage, onOpenJoinModal }) {
             })}
           </div>
 
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-3">
             <button 
               aria-label="Search"
               onClick={() => {
@@ -78,9 +78,10 @@ export default function Navbar({ activePage, setActivePage, onOpenJoinModal }) {
             >
               <Search className="w-4 h-4" />
             </button>
+
             <button
               onClick={onOpenJoinModal}
-              className="px-6 py-2.5 rounded-lg bg-[#f5ba13] hover:bg-[#eab308] text-black font-extrabold text-sm transition-all duration-200 shadow-[0_0_15px_rgba(245,186,19,0.35)] hover:shadow-[0_0_20px_rgba(245,186,19,0.55)] transform hover:-translate-y-0.5 cursor-pointer"
+              className="px-5 py-2.5 rounded-lg bg-[#f5ba13] hover:bg-[#eab308] text-black font-extrabold text-sm transition-all duration-200 shadow-[0_0_15px_rgba(245,186,19,0.35)] hover:shadow-[0_0_20px_rgba(245,186,19,0.55)] transform hover:-translate-y-0.5 cursor-pointer"
             >
               Join Us
             </button>
@@ -132,13 +133,13 @@ export default function Navbar({ activePage, setActivePage, onOpenJoinModal }) {
               </a>
             )
           })}
-          <div className="pt-4">
+          <div className="pt-3 border-t border-white/10">
             <button
               onClick={() => {
                 setMobileMenuOpen(false)
                 if (onOpenJoinModal) onOpenJoinModal()
               }}
-              className="block text-center w-full py-2.5 rounded-md bg-[#f5ba13] text-black font-bold text-base shadow-md cursor-pointer"
+              className="block text-center w-full py-2.5 rounded-md bg-[#f5ba13] text-black font-bold text-base shadow-md cursor-pointer mt-2"
             >
               Join Us
             </button>

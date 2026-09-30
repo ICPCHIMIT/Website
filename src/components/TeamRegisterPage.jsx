@@ -1,15 +1,30 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { 
   Users, User, Mail, Phone, Code2, CheckCircle2, 
   ArrowRight, ArrowLeft, AlertCircle, ShieldCheck, 
-  Trophy, RotateCcw, Building2
+  Trophy, RotateCcw, Building2, Megaphone, MessageCircle
 } from 'lucide-react'
+import { submitTeamApplication } from '../lib/database.js'
+import { getFormControl, fetchFormControls, subscribeToFormControls } from '../lib/formControlService.js'
+import FormClosedNotice from './FormClosedNotice.jsx'
 
 export default function TeamRegisterPage({ onNavigateHome }) {
   const [currentStep, setCurrentStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submittedData, setSubmittedData] = useState(null)
   const [errorMessage, setErrorMessage] = useState('')
+  const [formControl, setFormControl] = useState(() => getFormControl('team_registration'))
+
+  useEffect(() => {
+    fetchFormControls().then((controls) => {
+      if (controls?.team_registration) setFormControl(controls.team_registration)
+    }).catch(() => {})
+
+    const unsub = subscribeToFormControls((controls) => {
+      if (controls?.team_registration) setFormControl(controls.team_registration)
+    })
+    return () => unsub()
+  }, [])
 
   const [formData, setFormData] = useState({
     teamName: '',
@@ -123,50 +138,22 @@ export default function TeamRegisterPage({ onNavigateHome }) {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (!validateStep3()) return
     setIsSubmitting(true)
+    setErrorMessage('')
 
-    setTimeout(() => {
-      const teamId = `TEAM-${Math.floor(100000 + Math.random() * 900000)}`
-      const inst = formData.institution === 'Other' ? formData.customInstitution : formData.institution
-
-      const record = {
-        id: teamId,
-        team_name: formData.teamName.trim(),
-        institution: inst,
-        leader_name: formData.l1Name.trim(),
-        leader_email: formData.l1Email.trim(),
-        leader_phone: formData.l1Phone.trim(),
-        leader_codeforces: formData.l1Codeforces.trim(),
-        member2_name: formData.m2Name.trim(),
-        member2_email: formData.m2Email.trim(),
-        member2_phone: formData.m2Phone.trim(),
-        member2_codeforces: formData.m2Codeforces.trim(),
-        member3_name: formData.m3Name.trim(),
-        member3_email: formData.m3Email.trim(),
-        member3_phone: formData.m3Phone.trim(),
-        member3_codeforces: formData.m3Codeforces.trim(),
-        status: 'Official Roster',
-        createdAt: new Date().toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric'
-        })
-      }
-
-      try {
-        const saved = JSON.parse(localStorage.getItem('icpc_teams') || '[]')
-        saved.unshift(record)
-        localStorage.setItem('icpc_teams', JSON.stringify(saved))
-      } catch (err) {}
-
-      setSubmittedData(record)
+    try {
+      const res = await submitTeamApplication(formData)
+      setSubmittedData(res.data)
       setIsSubmitting(false)
       setCurrentStep(4)
       window.scrollTo({ top: 0, behavior: 'smooth' })
-    }, 1200)
+    } catch (err) {
+      setErrorMessage(err.message || 'Failed to register team')
+      setIsSubmitting(false)
+    }
   }
 
   const handleReset = () => {
@@ -199,10 +186,28 @@ export default function TeamRegisterPage({ onNavigateHome }) {
     { num: 3, title: 'Member 3 Details' }
   ]
 
+  if (!formControl.isOpen && !submittedData) {
+    return (
+      <FormClosedNotice
+        title={formControl.closedTitle}
+        message={formControl.closedMessage}
+        deadline={formControl.deadline}
+        onNavigateHome={onNavigateHome}
+      />
+    )
+  }
+
   return (
     <div className="min-h-screen bg-[#050811] text-slate-100 py-10 sm:py-16 md:py-20 bg-stars">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 sm:space-y-10">
         
+        {formControl.bannerMessage && (
+          <div className="p-4 rounded-2xl bg-[#f5ba13]/10 border border-[#f5ba13]/30 flex items-center gap-3 text-xs sm:text-sm font-mono text-[#f5ba13] animate-fade-in shadow-[0_0_20px_rgba(245,186,19,0.1)]">
+            <Megaphone className="w-5 h-5 flex-shrink-0 text-[#f5ba13]" />
+            <span>{formControl.bannerMessage}</span>
+          </div>
+        )}
+
         <div className="text-center space-y-4 animate-fade-in">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#f5ba13]/10 border border-[#f5ba13]/30 text-[#f5ba13] font-mono text-xs font-bold tracking-wider uppercase shadow-xs">
             <Trophy className="w-3.5 h-3.5 text-[#f5ba13]" />
@@ -722,6 +727,27 @@ export default function TeamRegisterPage({ onNavigateHome }) {
                 <span className="text-emerald-400 font-bold">{submittedData.status}</span>
               </div>
             </div>
+
+            {formControl.options?.communityWhatsappLink && (
+              <div className="p-5 rounded-2xl bg-[#0b1224] border border-white/10 max-w-lg mx-auto space-y-3 text-left">
+                <div className="font-pixel text-sm font-bold text-white flex items-center gap-2">
+                  <MessageCircle className="w-4 h-4 text-[#25D366]" />
+                  <span>Join Official Team Channels</span>
+                </div>
+                <p className="font-sans text-xs text-slate-400">
+                  Stay updated on contest schedules, arena credentials, and qualifications:
+                </p>
+                <a
+                  href={formControl.options.communityWhatsappLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-black font-sans font-bold text-sm shadow-md transition-colors"
+                >
+                  <MessageCircle className="w-5 h-5 text-black" />
+                  <span>Join Contest WhatsApp Group</span>
+                </a>
+              </div>
+            )}
 
             <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
               <button

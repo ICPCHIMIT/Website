@@ -1,5 +1,5 @@
-const SERVICE_ROLE_KEY_FALLBACK = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6eHZyeWZlY3puY3R6aGZiaXhoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NzMwMDQ3NywiZXhwIjoyMTAyODc2NDc3fQ.tO3oP3MCqilobIjzX2TYRqAYIOuMrkChRr7yHUEz_FI'
-const SUPABASE_URL_FALLBACK = 'https://yzxvryfecznctzhfbixh.supabase.co'
+const SERVICE_ROLE_KEY_FALLBACK = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhhcmV4YWN1bG10cWZwdHdraXV0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MDY3MjM3MCwiZXhwIjoyMTA2MjQ4MzcwfQ.pB--upfmKEQs90ZEugoMRmqL7rJPNoRDF2RUheb4KsQ'
+const SUPABASE_URL_FALLBACK = 'https://harexaculmtqfptwkiut.supabase.co'
 const STORAGE_KEY = 'icpc_website_form_controls'
 const EVENT_NAME = 'icpc_form_controls_updated'
 
@@ -170,48 +170,35 @@ export async function fetchFormControls() {
   const supabaseKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || SERVICE_ROLE_KEY_FALLBACK
 
   try {
-    const res = await fetch(`${supabaseUrl.replace(/\/$/, '')}/rest/v1/form_controls?select=id,config`, {
-      headers: {
-        'apikey': supabaseKey,
-        'Authorization': `Bearer ${supabaseKey}`
-      }
-    })
-
-    if (res.ok) {
-      const data = await res.json()
-      if (Array.isArray(data) && data.length > 0) {
-        const merged = { ...getLocalFormControls() }
-        for (const row of data) {
-          if (row.id && row.config) {
-            const def = DEFAULT_FORM_CONTROLS[row.id] || {}
-            merged[row.id] = {
-              ...def,
-              ...row.config,
-              options: {
-                ...(def.options || {}),
-                ...(row.config.options || {})
-              }
-            }
-          }
-        }
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(merged))
-          window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: merged }))
-        } catch (e) {}
-        return merged
-      }
-    }
-
     const settingsRes = await fetch(`${supabaseUrl.replace(/\/$/, '')}/rest/v1/system_settings?key=eq.form_controls_data&select=*`, {
       headers: {
         'apikey': supabaseKey,
         'Authorization': `Bearer ${supabaseKey}`
       }
     })
+
     if (settingsRes.ok) {
       const settingsData = await settingsRes.json()
       if (Array.isArray(settingsData) && settingsData[0]?.value) {
-        const merged = { ...getLocalFormControls(), ...settingsData[0].value }
+        const rawValue = settingsData[0].value
+        const local = getLocalFormControls()
+        const merged = { ...local }
+
+        for (const [key, val] of Object.entries(rawValue)) {
+          if (DEFAULT_FORM_CONTROLS[key] && typeof val === 'object' && val !== null) {
+            merged[key] = {
+              ...DEFAULT_FORM_CONTROLS[key],
+              ...(local[key] || {}),
+              ...val,
+              options: {
+                ...(DEFAULT_FORM_CONTROLS[key].options || {}),
+                ...(local[key]?.options || {}),
+                ...(val.options || {})
+              }
+            }
+          }
+        }
+
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(merged))
           window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: merged }))
@@ -236,9 +223,12 @@ export function subscribeToFormControls(callback) {
   window.addEventListener(EVENT_NAME, handler)
   window.addEventListener('storage', handler)
 
+  // Immediately invoke fetch
+  fetchFormControls().then(callback).catch(() => {})
+
   const timer = setInterval(() => {
     fetchFormControls().then(callback).catch(() => {})
-  }, 3000)
+  }, 2500)
 
   return () => {
     window.removeEventListener(EVENT_NAME, handler)

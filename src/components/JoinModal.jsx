@@ -188,7 +188,7 @@ export default function JoinModal({ isOpen, onClose, onNavigate }) {
                 </li>
                 <li className="flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-[#f5ba13] flex-shrink-0" />
-                  <span>Access to private Discord discussion channels and editorial walkthroughs.</span>
+                  <span>Access to private community discussion channels and editorial walkthroughs.</span>
                 </li>
               </ul>
             ) : (

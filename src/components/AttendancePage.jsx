@@ -490,24 +490,17 @@ export default function AttendancePage({ onNavigateHome, onNavigateRoadmap }) {
                 Weekly problem sheets, lecture recordings, and editorial discussions are shared in our official channels:
               </p>
               <div className="flex flex-col sm:flex-row gap-3 pt-1">
-                <a
-                  href={formControl.options?.communityWhatsappLink || 'https://chat.whatsapp.com/ICPC-HIMIT-Official'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-black font-sans font-bold text-xs shadow-md transition-colors"
-                >
-                  <MessageCircle className="w-4 h-4 text-black" />
-                  <span>Join WhatsApp Group</span>
-                </a>
-                <a
-                  href={formControl.options?.communityDiscordLink || 'https://discord.gg/icpc-himit'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#5865F2] hover:bg-[#4752c4] text-white font-sans font-bold text-xs shadow-md transition-colors"
-                >
-                  <Terminal className="w-4 h-4 text-white" />
-                  <span>Join Discord Server</span>
-                </a>
+                {formControl.options?.communityWhatsappLink && (
+                  <a
+                    href={formControl.options.communityWhatsappLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-black font-sans font-bold text-sm shadow-md transition-colors"
+                  >
+                    <MessageCircle className="w-5 h-5 text-black" />
+                    <span>Join Official WhatsApp Group</span>
+                  </a>
+                )}
               </div>
             </div>
 
