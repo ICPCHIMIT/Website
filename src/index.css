@@ -1,11 +1,12 @@
 @import "tailwindcss";
 
 @theme {
-  --font-pixel: "Oxanium", "Chakra Petch", "Space Grotesk", "Pixelify Sans", sans-serif;
-  --font-gaming: "Chakra Petch", "Oxanium", sans-serif;
-  --font-arcade: "Pixelify Sans", monospace, sans-serif;
-  --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-mono: "JetBrains Mono", "Space Mono", monospace;
+  --font-pixel: "Pixelify Sans", "Silkscreen", "Press Start 2P", monospace;
+  --font-arcade: "Press Start 2P", monospace;
+  --font-gaming: "Pixelify Sans", "Press Start 2P", "Silkscreen", monospace;
+  --font-display: "Pixelify Sans", "Press Start 2P", monospace;
+  --font-sans: "Pixelify Sans", "Silkscreen", sans-serif;
+  --font-mono: "VT323", "JetBrains Mono", monospace;
   --font-hand: "Caveat", cursive;
   --color-primary-gold: #f5ba13;
   --color-dark-bg: #05070d;
@@ -15,35 +16,45 @@ html {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-family: "Pixelify Sans", "Silkscreen", "Press Start 2P", monospace, sans-serif;
 }
 
 body {
   background-color: #05070d;
   color: #f1f5f9;
-  font-family: var(--font-sans);
+  font-family: var(--font-pixel);
   overflow-x: hidden;
+  letter-spacing: 0.02em;
+}
+
+/* Headings with high-tech pixel gaming styling */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-pixel);
+  letter-spacing: 0.03em;
 }
 
 .font-pixel {
-  font-family: var(--font-pixel);
-  letter-spacing: 0.015em;
+  font-family: var(--font-pixel) !important;
 }
 
 .font-gaming {
-  font-family: var(--font-gaming);
-  letter-spacing: 0.025em;
+  font-family: var(--font-gaming) !important;
+}
+
+.font-display {
+  font-family: var(--font-display) !important;
 }
 
 .font-arcade {
-  font-family: var(--font-arcade);
+  font-family: var(--font-arcade) !important;
 }
 
 .font-mono {
-  font-family: var(--font-mono);
+  font-family: var(--font-mono) !important;
 }
 
 .font-sans {
-  font-family: var(--font-sans);
+  font-family: var(--font-sans) !important;
 }
 
 .font-hand {

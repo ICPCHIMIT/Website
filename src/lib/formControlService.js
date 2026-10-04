@@ -1,7 +1,4 @@
-const SERVICE_ROLE_KEY_FALLBACK = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhhcmV4YWN1bG10cWZwdHdraXV0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MDY3MjM3MCwiZXhwIjoyMTA2MjQ4MzcwfQ.pB--upfmKEQs90ZEugoMRmqL7rJPNoRDF2RUheb4KsQ'
-const SUPABASE_URL_FALLBACK = 'https://harexaculmtqfptwkiut.supabase.co'
-const STORAGE_KEY = 'icpc_website_form_controls'
-const EVENT_NAME = 'icpc_form_controls_updated'
+import { supabase } from './supabase'
 
 export const DEFAULT_FORM_CONTROLS = {
   member_registration: {
@@ -114,125 +111,48 @@ export const DEFAULT_FORM_CONTROLS = {
   }
 }
 
-export function getLocalFormControls() {
+// In-memory cache for active session
+let inMemoryControlsCache = null
+
+export async function fetchFormControls() {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    if (saved) {
-      const parsed = JSON.parse(saved)
-      return {
+    const { data: rpcData, error: rpcError } = await supabase.rpc('get_public_website_settings')
+    if (!rpcError && rpcData?.form_controls_data) {
+      inMemoryControlsCache = {
         ...DEFAULT_FORM_CONTROLS,
-        ...parsed,
-        member_registration: {
-          ...DEFAULT_FORM_CONTROLS.member_registration,
-          ...(parsed.member_registration || {}),
-          options: {
-            ...DEFAULT_FORM_CONTROLS.member_registration.options,
-            ...(parsed.member_registration?.options || {})
-          }
-        },
-        team_registration: {
-          ...DEFAULT_FORM_CONTROLS.team_registration,
-          ...(parsed.team_registration || {}),
-          options: {
-            ...DEFAULT_FORM_CONTROLS.team_registration.options,
-            ...(parsed.team_registration?.options || {})
-          }
-        },
-        volunteer_registration: {
-          ...DEFAULT_FORM_CONTROLS.volunteer_registration,
-          ...(parsed.volunteer_registration || {}),
-          options: {
-            ...DEFAULT_FORM_CONTROLS.volunteer_registration.options,
-            ...(parsed.volunteer_registration?.options || {})
-          }
-        },
-        public_attendance: {
-          ...DEFAULT_FORM_CONTROLS.public_attendance,
-          ...(parsed.public_attendance || {}),
-          options: {
-            ...DEFAULT_FORM_CONTROLS.public_attendance.options,
-            ...(parsed.public_attendance?.options || {})
-          }
-        }
+        ...rpcData.form_controls_data
       }
+      return inMemoryControlsCache
     }
-  } catch (e) {}
-  return DEFAULT_FORM_CONTROLS
+
+    const { data, error } = await supabase
+      .from('system_settings')
+      .select('value')
+      .eq('key', 'form_controls_data')
+      .maybeSingle()
+
+    if (!error && data?.value) {
+      inMemoryControlsCache = {
+        ...DEFAULT_FORM_CONTROLS,
+        ...data.value
+      }
+      return inMemoryControlsCache
+    }
+  } catch (err) {
+    console.warn('Form controls fetch notice, using default configuration:', err)
+  }
+
+  return inMemoryControlsCache || DEFAULT_FORM_CONTROLS
 }
 
 export function getFormControl(formId) {
-  const all = getLocalFormControls()
-  return all[formId] || DEFAULT_FORM_CONTROLS[formId]
-}
-
-export async function fetchFormControls() {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || SUPABASE_URL_FALLBACK
-  const supabaseKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || SERVICE_ROLE_KEY_FALLBACK
-
-  try {
-    const settingsRes = await fetch(`${supabaseUrl.replace(/\/$/, '')}/rest/v1/system_settings?key=eq.form_controls_data&select=*`, {
-      headers: {
-        'apikey': supabaseKey,
-        'Authorization': `Bearer ${supabaseKey}`
-      }
-    })
-
-    if (settingsRes.ok) {
-      const settingsData = await settingsRes.json()
-      if (Array.isArray(settingsData) && settingsData[0]?.value) {
-        const rawValue = settingsData[0].value
-        const local = getLocalFormControls()
-        const merged = { ...local }
-
-        for (const [key, val] of Object.entries(rawValue)) {
-          if (DEFAULT_FORM_CONTROLS[key] && typeof val === 'object' && val !== null) {
-            merged[key] = {
-              ...DEFAULT_FORM_CONTROLS[key],
-              ...(local[key] || {}),
-              ...val,
-              options: {
-                ...(DEFAULT_FORM_CONTROLS[key].options || {}),
-                ...(local[key]?.options || {}),
-                ...(val.options || {})
-              }
-            }
-          }
-        }
-
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(merged))
-          window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: merged }))
-        } catch (e) {}
-        return merged
-      }
-    }
-  } catch (err) {}
-
-  return getLocalFormControls()
+  if (inMemoryControlsCache && inMemoryControlsCache[formId]) {
+    return inMemoryControlsCache[formId]
+  }
+  return DEFAULT_FORM_CONTROLS[formId] || { isOpen: true, options: {} }
 }
 
 export function subscribeToFormControls(callback) {
-  const handler = (e) => {
-    if (e.detail) {
-      callback(e.detail)
-    } else {
-      callback(getLocalFormControls())
-    }
-  }
-
-  window.addEventListener(EVENT_NAME, handler)
-  window.addEventListener('storage', handler)
-
-  // Immediately invoke fetch
   fetchFormControls().then(callback).catch(() => {})
-
-  const timer = setInterval(() => {
-    fetchFormControls().then(callback).catch(() => {})
-  }, 2500)
-
-  return () => {
-    window.removeEventListener(EVENT_NAME, handler)
-    window.removeEventListener('storage', handler)
-    clearInterval(timer)
-  }
+  return () => {}
 }

@@ -1,10 +1,5 @@
 import { roadmapLevels as defaultRoadmapLevels } from '../data/roadmapData'
 
-const WEBSITE_STORAGE_KEY = 'icpc_website_content_cache'
-const ROADMAP_STORAGE_KEY = 'icpc_roadmap_content_cache'
-const JOURNEY_STORAGE_KEY = 'icpc_journey_content_cache'
-const SPONSORS_STORAGE_KEY = 'icpc_sponsors_content_cache'
-const UPCOMING_EVENT_STORAGE_KEY = 'icpc_upcoming_event_content_cache'
 const WEBSITE_EVENT = 'icpc_website_content_updated'
 const ROADMAP_EVENT = 'icpc_roadmap_content_updated'
 const JOURNEY_EVENT = 'icpc_journey_content_updated'
@@ -83,44 +78,30 @@ export const DEFAULT_UPCOMING_EVENT_DATA = {
   sideNoteLines: ["A", "BIGGER", "TOMORROW", "AWAITS_"]
 }
 
+// In-Memory Transient State Cache
+let inMemoryWebsiteData = null
+let inMemoryRoadmapData = null
+let inMemoryJourneyData = null
+let inMemorySponsorsData = null
+let inMemoryUpcomingEventData = null
+
 export function getLocalWebsiteData() {
-  try {
-    const saved = localStorage.getItem(WEBSITE_STORAGE_KEY)
-    if (saved) {
-      const parsed = JSON.parse(saved)
-      return {
-        ...DEFAULT_WEBSITE_DATA,
-        ...parsed,
-        stats: {
-          ...DEFAULT_WEBSITE_DATA.stats,
-          ...(parsed.stats || {})
-        },
-        links: {
-          ...DEFAULT_WEBSITE_DATA.links,
-          ...(parsed.links || {})
-        }
-      }
-    }
-  } catch (e) {}
+  if (inMemoryWebsiteData) {
+    return inMemoryWebsiteData
+  }
   return DEFAULT_WEBSITE_DATA
 }
 
 export function getLocalRoadmapData() {
-  try {
-    const saved = localStorage.getItem(ROADMAP_STORAGE_KEY)
-    if (saved) {
-      const parsed = JSON.parse(saved)
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed
-      }
-    }
-  } catch (e) {}
+  if (inMemoryRoadmapData) {
+    return inMemoryRoadmapData
+  }
   return defaultRoadmapLevels
 }
 
 export async function fetchWebsiteData() {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-  const supabaseKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY
+  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
   if (!supabaseUrl || !supabaseKey) {
     return getLocalWebsiteData()
@@ -150,10 +131,8 @@ export async function fetchWebsiteData() {
             ...(value.links || {})
           }
         }
-        try {
-          localStorage.setItem(WEBSITE_STORAGE_KEY, JSON.stringify(merged))
-          window.dispatchEvent(new CustomEvent(WEBSITE_EVENT, { detail: merged }))
-        } catch (e) {}
+        inMemoryWebsiteData = merged
+        window.dispatchEvent(new CustomEvent(WEBSITE_EVENT, { detail: merged }))
         return merged
       }
     }
@@ -164,7 +143,7 @@ export async function fetchWebsiteData() {
 
 export async function fetchRoadmapData() {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-  const supabaseKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY
+  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
   if (!supabaseUrl || !supabaseKey) {
     return getLocalRoadmapData()
@@ -182,10 +161,8 @@ export async function fetchRoadmapData() {
       const rows = await res.json()
       if (Array.isArray(rows) && rows.length > 0 && Array.isArray(rows[0]?.value) && rows[0].value.length > 0) {
         const val = rows[0].value
-        try {
-          localStorage.setItem(ROADMAP_STORAGE_KEY, JSON.stringify(val))
-          window.dispatchEvent(new CustomEvent(ROADMAP_EVENT, { detail: val }))
-        } catch (e) {}
+        inMemoryRoadmapData = val
+        window.dispatchEvent(new CustomEvent(ROADMAP_EVENT, { detail: val }))
         return val
       }
     }
@@ -204,11 +181,9 @@ export function subscribeToWebsiteData(callback) {
   }
 
   window.addEventListener(WEBSITE_EVENT, handler)
-  window.addEventListener('storage', handler)
 
   return () => {
     window.removeEventListener(WEBSITE_EVENT, handler)
-    window.removeEventListener('storage', handler)
   }
 }
 
@@ -222,50 +197,29 @@ export function subscribeToRoadmapData(callback) {
   }
 
   window.addEventListener(ROADMAP_EVENT, handler)
-  window.addEventListener('storage', handler)
 
   return () => {
     window.removeEventListener(ROADMAP_EVENT, handler)
-    window.removeEventListener('storage', handler)
   }
 }
 
 export function getLocalJourneyData() {
-  try {
-    const saved = localStorage.getItem(JOURNEY_STORAGE_KEY)
-    if (saved) {
-      const parsed = JSON.parse(saved)
-      return {
-        ...DEFAULT_JOURNEY_DATA,
-        ...parsed,
-        levels: Array.isArray(parsed.levels) && parsed.levels.length > 0 ? parsed.levels : DEFAULT_JOURNEY_DATA.levels,
-        codeCommentLines: Array.isArray(parsed.codeCommentLines) && parsed.codeCommentLines.length > 0 ? parsed.codeCommentLines : DEFAULT_JOURNEY_DATA.codeCommentLines,
-        handNoteLines: Array.isArray(parsed.handNoteLines) && parsed.handNoteLines.length > 0 ? parsed.handNoteLines : DEFAULT_JOURNEY_DATA.handNoteLines,
-        badgeNoteLines: Array.isArray(parsed.badgeNoteLines) && parsed.badgeNoteLines.length > 0 ? parsed.badgeNoteLines : DEFAULT_JOURNEY_DATA.badgeNoteLines
-      }
-    }
-  } catch (e) {}
+  if (inMemoryJourneyData) {
+    return inMemoryJourneyData
+  }
   return DEFAULT_JOURNEY_DATA
 }
 
 export function getLocalSponsorsData() {
-  try {
-    const saved = localStorage.getItem(SPONSORS_STORAGE_KEY)
-    if (saved) {
-      const parsed = JSON.parse(saved)
-      return {
-        ...DEFAULT_SPONSORS_DATA,
-        ...parsed,
-        sponsors: Array.isArray(parsed.sponsors) && parsed.sponsors.length > 0 ? parsed.sponsors : DEFAULT_SPONSORS_DATA.sponsors
-      }
-    }
-  } catch (e) {}
+  if (inMemorySponsorsData) {
+    return inMemorySponsorsData
+  }
   return DEFAULT_SPONSORS_DATA
 }
 
 export async function fetchJourneyData() {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-  const supabaseKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY
+  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
   if (!supabaseUrl || !supabaseKey) {
     return getLocalJourneyData()
@@ -291,10 +245,8 @@ export async function fetchJourneyData() {
           handNoteLines: Array.isArray(val.handNoteLines) && val.handNoteLines.length > 0 ? val.handNoteLines : DEFAULT_JOURNEY_DATA.handNoteLines,
           badgeNoteLines: Array.isArray(val.badgeNoteLines) && val.badgeNoteLines.length > 0 ? val.badgeNoteLines : DEFAULT_JOURNEY_DATA.badgeNoteLines
         }
-        try {
-          localStorage.setItem(JOURNEY_STORAGE_KEY, JSON.stringify(merged))
-          window.dispatchEvent(new CustomEvent(JOURNEY_EVENT, { detail: merged }))
-        } catch (e) {}
+        inMemoryJourneyData = merged
+        window.dispatchEvent(new CustomEvent(JOURNEY_EVENT, { detail: merged }))
         return merged
       }
     }
@@ -305,7 +257,7 @@ export async function fetchJourneyData() {
 
 export async function fetchSponsorsData() {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-  const supabaseKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY
+  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
   if (!supabaseUrl || !supabaseKey) {
     return getLocalSponsorsData()
@@ -328,10 +280,8 @@ export async function fetchSponsorsData() {
           ...val,
           sponsors: Array.isArray(val.sponsors) && val.sponsors.length > 0 ? val.sponsors : DEFAULT_SPONSORS_DATA.sponsors
         }
-        try {
-          localStorage.setItem(SPONSORS_STORAGE_KEY, JSON.stringify(merged))
-          window.dispatchEvent(new CustomEvent(SPONSORS_EVENT, { detail: merged }))
-        } catch (e) {}
+        inMemorySponsorsData = merged
+        window.dispatchEvent(new CustomEvent(SPONSORS_EVENT, { detail: merged }))
         return merged
       }
     }
@@ -350,11 +300,9 @@ export function subscribeToJourneyData(callback) {
   }
 
   window.addEventListener(JOURNEY_EVENT, handler)
-  window.addEventListener('storage', handler)
 
   return () => {
     window.removeEventListener(JOURNEY_EVENT, handler)
-    window.removeEventListener('storage', handler)
   }
 }
 
@@ -368,32 +316,22 @@ export function subscribeToSponsorsData(callback) {
   }
 
   window.addEventListener(SPONSORS_EVENT, handler)
-  window.addEventListener('storage', handler)
 
   return () => {
     window.removeEventListener(SPONSORS_EVENT, handler)
-    window.removeEventListener('storage', handler)
   }
 }
 
 export function getLocalUpcomingEventData() {
-  try {
-    const saved = localStorage.getItem(UPCOMING_EVENT_STORAGE_KEY)
-    if (saved) {
-      const parsed = JSON.parse(saved)
-      return {
-        ...DEFAULT_UPCOMING_EVENT_DATA,
-        ...parsed,
-        sideNoteLines: Array.isArray(parsed.sideNoteLines) && parsed.sideNoteLines.length > 0 ? parsed.sideNoteLines : DEFAULT_UPCOMING_EVENT_DATA.sideNoteLines
-      }
-    }
-  } catch (e) {}
+  if (inMemoryUpcomingEventData) {
+    return inMemoryUpcomingEventData
+  }
   return DEFAULT_UPCOMING_EVENT_DATA
 }
 
 export async function fetchUpcomingEventData() {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-  const supabaseKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY
+  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
   if (!supabaseUrl || !supabaseKey) {
     return getLocalUpcomingEventData()
@@ -416,10 +354,8 @@ export async function fetchUpcomingEventData() {
           ...val,
           sideNoteLines: Array.isArray(val.sideNoteLines) && val.sideNoteLines.length > 0 ? val.sideNoteLines : DEFAULT_UPCOMING_EVENT_DATA.sideNoteLines
         }
-        try {
-          localStorage.setItem(UPCOMING_EVENT_STORAGE_KEY, JSON.stringify(merged))
-          window.dispatchEvent(new CustomEvent(UPCOMING_EVENT_EVENT, { detail: merged }))
-        } catch (e) {}
+        inMemoryUpcomingEventData = merged
+        window.dispatchEvent(new CustomEvent(UPCOMING_EVENT_EVENT, { detail: merged }))
         return merged
       }
     }
@@ -447,10 +383,8 @@ export async function fetchUpcomingEventData() {
           location: ev.location || DEFAULT_UPCOMING_EVENT_DATA.location,
           description: ev.description || DEFAULT_UPCOMING_EVENT_DATA.description
         }
-        try {
-          localStorage.setItem(UPCOMING_EVENT_STORAGE_KEY, JSON.stringify(merged))
-          window.dispatchEvent(new CustomEvent(UPCOMING_EVENT_EVENT, { detail: merged }))
-        } catch (e) {}
+        inMemoryUpcomingEventData = merged
+        window.dispatchEvent(new CustomEvent(UPCOMING_EVENT_EVENT, { detail: merged }))
         return merged
       }
     }
@@ -469,17 +403,15 @@ export function subscribeToUpcomingEventData(callback) {
   }
 
   window.addEventListener(UPCOMING_EVENT_EVENT, handler)
-  window.addEventListener('storage', handler)
 
   return () => {
     window.removeEventListener(UPCOMING_EVENT_EVENT, handler)
-    window.removeEventListener('storage', handler)
   }
 }
 
 export async function fetchCommittees() {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-  const supabaseKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY
+  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
   if (supabaseUrl && supabaseKey) {
     try {
@@ -497,4 +429,3 @@ export async function fetchCommittees() {
   }
   return null
 }
-

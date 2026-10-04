@@ -35,7 +35,7 @@ export default function AttendancePage({ onNavigateHome, onNavigateRoadmap }) {
   useEffect(() => {
     try {
       const sessionKey = `icpc_att_${currentSessionType}_s${currentSessionNum}`
-      const saved = localStorage.getItem(sessionKey)
+      const saved = sessionStorage.getItem(sessionKey)
       if (saved) {
         const parsed = JSON.parse(saved)
         setDeviceAlreadySubmitted(parsed)
@@ -122,6 +122,10 @@ export default function AttendancePage({ onNavigateHome, onNavigateRoadmap }) {
         sessionType: currentSessionType,
         sessionTitle: currentSessionTitle
       })
+      const sessionKey = `icpc_att_${currentSessionType}_s${currentSessionNum}`
+      try {
+        sessionStorage.setItem(sessionKey, JSON.stringify(res.data))
+      } catch (e) {}
       setSubmittedData(res.data)
       setIsSubmitting(false)
       window.scrollTo({ top: 0, behavior: 'smooth' })
