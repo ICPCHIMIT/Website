@@ -10,27 +10,48 @@ export async function submitMemberApplication(formData) {
     full_name: (formData.fullName || formData.name || '').trim(),
     email: (formData.email || '').trim().toLowerCase(),
     phone_number: (formData.phone || '').trim(),
+    phone: (formData.phone || '').trim(),
     national_id: (formData.nationalId || '').trim() || null,
     university: (formData.university === 'Other' ? formData.customUniversity : formData.university) || 'HIMIT',
     major: (formData.major === 'Others' ? formData.customMajor : formData.major) || 'Computer Science',
     academic_year: (formData.academicYear || '').trim(),
     codeforces_handle: (formData.codeforcesHandle || formData.codeforces || '').trim() || null,
     linkedin_link: (formData.linkedinLink || '').trim() || null,
+    linkedin_url: (formData.linkedinLink || '').trim() || null,
     why_join: (formData.whyJoin || formData.trackPreference || formData.track || '').trim() || null,
     experience: formData.experience || formData.trackPreference || null,
     image: formData.image || null,
     national_id_front: formData.nationalIdFront || null,
     national_id_back: formData.nationalIdBack || null,
+    national_id_card: formData.nationalIdFront || null,
     problem_solution: (formData.problemSolution || '').trim() || null,
     status: 'pending',
     created_at: new Date().toISOString()
   }
 
-  const { data, error } = await supabase
+  // Attempt initial insert with all image & document fields
+  let { data, error } = await supabase
     .from('member_applications')
     .insert([payload])
     .select()
     .single()
+
+  // Resilient retry if specific column is not yet in PostgREST schema cache
+  if (error && error.message && error.message.includes("Could not find the '")) {
+    console.warn('PostgREST schema cache notice, attempting safe retry without missing columns:', error.message)
+    const cleanPayload = { ...payload }
+    const match = error.message.match(/Could not find the '([^']+)' column/)
+    if (match && match[1]) {
+      delete cleanPayload[match[1]]
+    }
+    const retryRes = await supabase
+      .from('member_applications')
+      .insert([cleanPayload])
+      .select()
+      .single()
+    data = retryRes.data
+    error = retryRes.error
+  }
 
   if (error) {
     console.error('Member application persistence failure:', error)
@@ -55,8 +76,10 @@ export async function submitVolunteerApplication(formData) {
 
   const payload = {
     name: (formData.name || formData.fullName || '').trim(),
+    full_name: (formData.name || formData.fullName || '').trim(),
     email: (formData.email || '').trim().toLowerCase(),
     phone_number: (formData.phone || '').trim(),
+    phone: (formData.phone || '').trim(),
     national_id: (formData.nationalId || '').trim() || null,
     university,
     major,
@@ -67,6 +90,7 @@ export async function submitVolunteerApplication(formData) {
     image: formData.image || null,
     national_id_front: formData.nationalIdFront || null,
     national_id_back: formData.nationalIdBack || null,
+    national_id_card: formData.nationalIdFront || null,
     why_join: formData.whyJoin || null,
     experience: formData.experience || null,
     availability_hours: formData.availabilityHours ? parseInt(formData.availabilityHours) : null,
@@ -75,11 +99,27 @@ export async function submitVolunteerApplication(formData) {
     created_at: new Date().toISOString()
   }
 
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('volunteer_applications')
     .insert([payload])
     .select()
     .single()
+
+  if (error && error.message && error.message.includes("Could not find the '")) {
+    console.warn('PostgREST schema cache notice on volunteer app, retrying:', error.message)
+    const cleanPayload = { ...payload }
+    const match = error.message.match(/Could not find the '([^']+)' column/)
+    if (match && match[1]) {
+      delete cleanPayload[match[1]]
+    }
+    const retryRes = await supabase
+      .from('volunteer_applications')
+      .insert([cleanPayload])
+      .select()
+      .single()
+    data = retryRes.data
+    error = retryRes.error
+  }
 
   if (error) {
     console.error('Volunteer application persistence failure:', error)

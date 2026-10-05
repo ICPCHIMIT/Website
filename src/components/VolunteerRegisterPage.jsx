@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { submitVolunteerApplication, fetchCommittees } from '../lib/database.js'
 import { getFormControl, fetchFormControls, subscribeToFormControls } from '../lib/formControlService.js'
+import { processAndUploadImage } from '../lib/imageUploadService.js'
 import FormClosedNotice from './FormClosedNotice.jsx'
 
 export default function VolunteerRegisterPage({ onNavigateHome, onNavigateCommittees }) {
@@ -51,6 +52,12 @@ export default function VolunteerRegisterPage({ onNavigateHome, onNavigateCommit
     image: null,
     nationalIdFront: null,
     nationalIdBack: null
+  })
+
+  const [uploadingFields, setUploadingFields] = useState({
+    image: false,
+    nationalIdFront: false,
+    nationalIdBack: false
   })
 
   const committees = [
@@ -109,18 +116,30 @@ export default function VolunteerRegisterPage({ onNavigateHome, onNavigateCommit
     setErrorMessage('')
   }
 
-  const handleFileUpload = (field, file) => {
+  const handleFileUpload = async (field, file) => {
     if (!file) return
-    if (file.size > 5 * 1024 * 1024) {
-      setErrorMessage('File size exceeds 5MB limit.')
+    if (file.size > 10 * 1024 * 1024) {
+      setErrorMessage('File size exceeds 10MB limit.')
       return
     }
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      setPreviews(prev => ({ ...prev, [field]: reader.result }))
-      setFormData(prev => ({ ...prev, [field]: reader.result }))
+    setUploadingFields(prev => ({ ...prev, [field]: true }))
+    setErrorMessage('')
+
+    try {
+      const res = await processAndUploadImage(file, {
+        bucket: 'applications',
+        folder: field === 'image' ? 'volunteers/photos' : 'volunteers/national_id'
+      })
+      if (res) {
+        setPreviews(prev => ({ ...prev, [field]: res.preview }))
+        setFormData(prev => ({ ...prev, [field]: res.value }))
+      }
+    } catch (err) {
+      console.error('Volunteer file upload failed:', err)
+      setErrorMessage('Failed to process image. Please try another photo.')
+    } finally {
+      setUploadingFields(prev => ({ ...prev, [field]: false }))
     }
-    reader.readAsDataURL(file)
   }
 
   const removeFile = (field) => {
@@ -461,7 +480,12 @@ export default function VolunteerRegisterPage({ onNavigateHome, onNavigateCommit
                         <div className="font-mono text-[11px] font-bold text-slate-300">
                           Personal Photo *
                         </div>
-                        {previews.image ? (
+                        {uploadingFields.image ? (
+                          <div className="w-full h-32 rounded-xl border border-[#f5ba13]/30 bg-white/5 flex flex-col items-center justify-center p-3 text-center">
+                            <div className="w-6 h-6 border-2 border-[#f5ba13] border-t-transparent rounded-full animate-spin mb-2" />
+                            <span className="font-mono text-[11px] text-[#f5ba13] font-bold">Uploading Photo...</span>
+                          </div>
+                        ) : previews.image ? (
                           <div className="relative group w-full h-32 rounded-xl overflow-hidden border border-[#f5ba13]/50">
                             <img src={previews.image} alt="Profile preview" className="w-full h-full object-cover" />
                             <button
@@ -476,7 +500,7 @@ export default function VolunteerRegisterPage({ onNavigateHome, onNavigateCommit
                           <label className="w-full h-32 rounded-xl border-2 border-dashed border-white/15 hover:border-[#f5ba13]/60 flex flex-col items-center justify-center p-3 text-center cursor-pointer transition-colors bg-white/5 hover:bg-white/10">
                             <UploadCloud className="w-6 h-6 text-slate-400 mb-1.5" />
                             <span className="font-sans text-[11px] font-semibold text-slate-300">Choose photo</span>
-                            <span className="text-[9px] text-slate-500 font-mono mt-0.5">JPG, PNG (Max 5MB)</span>
+                            <span className="text-[9px] text-slate-500 font-mono mt-0.5">JPG, PNG (Max 10MB)</span>
                             <input
                               type="file"
                               accept="image/*"
@@ -494,7 +518,12 @@ export default function VolunteerRegisterPage({ onNavigateHome, onNavigateCommit
                           <div className="font-mono text-[11px] font-bold text-slate-300">
                             National ID (Front) *
                           </div>
-                          {previews.nationalIdFront ? (
+                          {uploadingFields.nationalIdFront ? (
+                            <div className="w-full h-32 rounded-xl border border-[#f5ba13]/30 bg-white/5 flex flex-col items-center justify-center p-3 text-center">
+                              <div className="w-6 h-6 border-2 border-[#f5ba13] border-t-transparent rounded-full animate-spin mb-2" />
+                              <span className="font-mono text-[11px] text-[#f5ba13] font-bold">Uploading Front...</span>
+                            </div>
+                          ) : previews.nationalIdFront ? (
                             <div className="relative group w-full h-32 rounded-xl overflow-hidden border border-[#f5ba13]/50">
                               <img src={previews.nationalIdFront} alt="ID Front preview" className="w-full h-full object-cover" />
                               <button
@@ -509,7 +538,7 @@ export default function VolunteerRegisterPage({ onNavigateHome, onNavigateCommit
                             <label className="w-full h-32 rounded-xl border-2 border-dashed border-white/15 hover:border-[#f5ba13]/60 flex flex-col items-center justify-center p-3 text-center cursor-pointer transition-colors bg-white/5 hover:bg-white/10">
                               <UploadCloud className="w-6 h-6 text-slate-400 mb-1.5" />
                               <span className="font-sans text-[11px] font-semibold text-slate-300">Upload Front</span>
-                              <span className="text-[9px] text-slate-500 font-mono mt-0.5">JPG, PNG (Max 5MB)</span>
+                              <span className="text-[9px] text-slate-500 font-mono mt-0.5">JPG, PNG (Max 10MB)</span>
                               <input
                                 type="file"
                                 accept="image/*"
@@ -524,7 +553,12 @@ export default function VolunteerRegisterPage({ onNavigateHome, onNavigateCommit
                           <div className="font-mono text-[11px] font-bold text-slate-300">
                             National ID (Back) *
                           </div>
-                          {previews.nationalIdBack ? (
+                          {uploadingFields.nationalIdBack ? (
+                            <div className="w-full h-32 rounded-xl border border-[#f5ba13]/30 bg-white/5 flex flex-col items-center justify-center p-3 text-center">
+                              <div className="w-6 h-6 border-2 border-[#f5ba13] border-t-transparent rounded-full animate-spin mb-2" />
+                              <span className="font-mono text-[11px] text-[#f5ba13] font-bold">Uploading Back...</span>
+                            </div>
+                          ) : previews.nationalIdBack ? (
                             <div className="relative group w-full h-32 rounded-xl overflow-hidden border border-[#f5ba13]/50">
                               <img src={previews.nationalIdBack} alt="ID Back preview" className="w-full h-full object-cover" />
                               <button
@@ -539,7 +573,7 @@ export default function VolunteerRegisterPage({ onNavigateHome, onNavigateCommit
                             <label className="w-full h-32 rounded-xl border-2 border-dashed border-white/15 hover:border-[#f5ba13]/60 flex flex-col items-center justify-center p-3 text-center cursor-pointer transition-colors bg-white/5 hover:bg-white/10">
                               <UploadCloud className="w-6 h-6 text-slate-400 mb-1.5" />
                               <span className="font-sans text-[11px] font-semibold text-slate-300">Upload Back</span>
-                              <span className="text-[9px] text-slate-500 font-mono mt-0.5">JPG, PNG (Max 5MB)</span>
+                              <span className="text-[9px] text-slate-500 font-mono mt-0.5">JPG, PNG (Max 10MB)</span>
                               <input
                                 type="file"
                                 accept="image/*"
