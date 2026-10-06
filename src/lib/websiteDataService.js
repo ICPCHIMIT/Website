@@ -99,6 +99,62 @@ export function getLocalRoadmapData() {
   return defaultRoadmapLevels
 }
 
+const ROADMAP_ACCENT_FALLBACKS = ['#f5ba13', '#38bdf8', '#a78bfa', '#fb7185', '#34d399']
+const TAILWIND_ACCENTS = {
+  blue: '#3b82f6', cyan: '#06b6d4', indigo: '#6366f1', purple: '#a855f7',
+  amber: '#f59e0b', rose: '#f43f5e', emerald: '#10b981', green: '#22c55e',
+  red: '#ef4444', orange: '#f97316', yellow: '#eab308', pink: '#ec4899', teal: '#14b8a6'
+}
+
+const toText = (v) => (typeof v === 'string' ? v : v == null ? '' : String(v))
+
+// Supabase may store roadmap levels in a different schema than the page expects
+// (e.g. { title, color, targetLevel, weeks: [{ topic, weekNumber, description, practiceTopic, practiceUrl }] }).
+// Normalize every level/week into the shape RoadmapPage renders so it never crashes.
+export function normalizeRoadmapLevels(levels) {
+  if (!Array.isArray(levels)) return []
+  return levels.filter(Boolean).map((lvl, idx) => {
+    const title = toText(lvl.title)
+    const [titleLevel, ...titleRest] = title.split(':')
+    const levelLabel = toText(lvl.level) || (titleRest.length ? titleLevel.trim() : `Level ${idx}`)
+    const phase = toText(lvl.phase) || (titleRest.length ? titleRest.join(':').trim() : title)
+    const levelNum = (levelLabel.match(/\d+/) || [idx])[0]
+
+    let accentColor = toText(lvl.accentColor)
+    if (!accentColor) {
+      const twMatch = toText(lvl.color).match(/from-([a-z]+)-/)
+      accentColor = (twMatch && TAILWIND_ACCENTS[twMatch[1]]) || ROADMAP_ACCENT_FALLBACKS[idx % ROADMAP_ACCENT_FALLBACKS.length]
+    }
+
+    const weeks = (Array.isArray(lvl.weeks) ? lvl.weeks : []).filter(Boolean).map((w, wIdx) => {
+      const num = w.weekNumber ?? wIdx + 1
+      const topics = Array.isArray(w.topics)
+        ? w.topics.map(toText)
+        : [w.practiceTopic].filter(Boolean).map(toText)
+      return {
+        ...w,
+        week: toText(w.week) || `Week ${String(num).padStart(2, '0')}`,
+        title: toText(w.title) || toText(w.topic),
+        focus: toText(w.focus) || toText(w.description),
+        topics,
+        videoUrl: w.videoUrl || '',
+        practiceUrl: w.practiceUrl || ''
+      }
+    })
+
+    return {
+      ...lvl,
+      id: toText(lvl.id) || `level-${idx}`,
+      level: levelLabel,
+      phase,
+      badge: toText(lvl.badge) || `L${levelNum}`,
+      accentColor,
+      description: toText(lvl.description) || (lvl.targetLevel ? `Target: ${lvl.targetLevel}` : ''),
+      weeks
+    }
+  })
+}
+
 export async function fetchWebsiteData() {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
   const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -160,7 +216,7 @@ export async function fetchRoadmapData() {
     if (res.ok) {
       const rows = await res.json()
       if (Array.isArray(rows) && rows.length > 0 && Array.isArray(rows[0]?.value) && rows[0].value.length > 0) {
-        const val = rows[0].value
+        const val = normalizeRoadmapLevels(rows[0].value)
         inMemoryRoadmapData = val
         window.dispatchEvent(new CustomEvent(ROADMAP_EVENT, { detail: val }))
         return val
