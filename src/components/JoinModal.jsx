@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react'
 import { X, Code2, Users, ArrowRight, CheckCircle2, Trophy, BookOpen, ShieldCheck, Layers, Lock } from 'lucide-react'
 import { getFormControl, subscribeToFormControls, fetchFormControls } from '../lib/formControlService'
 
+export const VOLUNTEER_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSe7av0P0d_QrfZyYgLgm0vYmkrZudZ2BH98RQepXDAh1p0WoQ/viewform?usp=send_form'
+export const MEMBER_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLScvsNfpnXgzavKJrLpwEzbw7SGmAFXB3itDjY_sgu4AkQXVwA/viewform?usp=send_form'
+
 export default function JoinModal({ isOpen, onClose, onNavigate }) {
   const [selectedRole, setSelectedRole] = useState('member')
   const [memberControl, setMemberControl] = useState(() => getFormControl('member_registration'))
@@ -232,12 +235,12 @@ export default function JoinModal({ isOpen, onClose, onNavigate }) {
                 </button>
                 <button
                   onClick={() => {
+                    window.open(MEMBER_FORM_URL, '_blank', 'noopener,noreferrer')
                     onClose()
-                    onNavigate('member-register')
                   }}
                   className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-[#f5ba13] hover:bg-[#eab308] text-black font-sans font-extrabold text-xs shadow-[0_0_15px_rgba(245,186,19,0.35)] transition-all cursor-pointer"
                 >
-                  <span>{memberControl.isOpen ? 'Register as Member' : 'View Member Status'}</span>
+                  <span>Register as Member</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </>
@@ -254,12 +257,12 @@ export default function JoinModal({ isOpen, onClose, onNavigate }) {
                 </button>
                 <button
                   onClick={() => {
+                    window.open(VOLUNTEER_FORM_URL, '_blank', 'noopener,noreferrer')
                     onClose()
-                    onNavigate('volunteer-register')
                   }}
                   className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-[#38bdf8] hover:bg-[#0284c7] text-black font-sans font-extrabold text-xs shadow-[0_0_15px_rgba(56,189,248,0.35)] transition-all cursor-pointer"
                 >
-                  <span>{volunteerControl.isOpen ? 'Apply as Volunteer' : 'View Volunteer Status'}</span>
+                  <span>Apply as Volunteer</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </>

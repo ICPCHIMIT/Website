@@ -27,26 +27,53 @@ export default function CommitteesPage({ onNavigateHome, onOpenJoinModal }) {
 
   useEffect(() => {
     fetchCommittees().then(data => {
-      if (Array.isArray(data) && data.length > 0) {
-        // Map database schema to display format if needed
-        const mapped = data.map((item, idx) => {
-          const fallback = committeesData.find(c => c.id === item.id || c.name.toLowerCase() === (item.name || '').toLowerCase())
-          return {
-            id: item.id || `committee-${idx}`,
-            name: item.name || fallback?.name || "Committee",
-            tag: item.tag || fallback?.tag || (item.name ? item.name.toUpperCase() : "TEAM"),
-            description: item.description || fallback?.description || "Dedicated team supporting ICPC HIMIT.",
-            accentColor: item.accent_color || fallback?.accentColor || (idx % 2 === 0 ? "#f5ba13" : "#38bdf8"),
-            responsibilities: Array.isArray(item.responsibilities) && item.responsibilities.length > 0
-              ? item.responsibilities
-              : fallback?.responsibilities || [
-                  "Organize community activities and sessions",
-                  "Support students in competitive programming"
-                ]
-          }
-        })
-        setCommittees(mapped)
+      if (!Array.isArray(data) || data.length === 0) return
+
+      const norm = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '')
+      const matchesBuiltIn = (item, builtIn) => {
+        if (item.id && item.id === builtIn.id) return true
+        const a = norm(item.name)
+        const b = norm(builtIn.name)
+        return a.length >= 3 && (a === b || b.includes(a) || a.includes(b))
       }
+
+      const usedRows = new Set()
+
+      // 1) Always keep the built-in committees; enrich them with matching DB rows.
+      const merged = committeesData.map((builtIn) => {
+        const row = data.find((item) => !usedRows.has(item) && matchesBuiltIn(item, builtIn))
+        if (!row) return builtIn
+        usedRows.add(row)
+        if (row.is_active === false) return builtIn
+        return {
+          ...builtIn,
+          tag: row.tag || builtIn.tag,
+          description: row.description || builtIn.description,
+          accentColor: row.accent_color || builtIn.accentColor,
+          responsibilities: Array.isArray(row.responsibilities) && row.responsibilities.length > 0
+            ? row.responsibilities
+            : builtIn.responsibilities
+        }
+      })
+
+      // 2) Append extra active DB committees that don't match a built-in one.
+      const extras = data
+        .filter((item) => !usedRows.has(item) && item.is_active !== false && item.name)
+        .map((item, idx) => ({
+          id: item.id || `committee-extra-${idx}`,
+          name: item.name,
+          tag: item.tag || item.name.toUpperCase(),
+          description: item.description || "Dedicated team supporting ICPC HIMIT.",
+          accentColor: item.accent_color || (idx % 2 === 0 ? "#f5ba13" : "#38bdf8"),
+          responsibilities: Array.isArray(item.responsibilities) && item.responsibilities.length > 0
+            ? item.responsibilities
+            : [
+                "Organize community activities and sessions",
+                "Support students in competitive programming"
+              ]
+        }))
+
+      setCommittees([...merged, ...extras])
     }).catch(() => {})
   }, [])
   return (

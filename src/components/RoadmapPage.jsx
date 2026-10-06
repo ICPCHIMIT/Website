@@ -225,7 +225,8 @@ export default function RoadmapPage({ onNavigateHome, onOpenJoinModal }) {
                       
                       <div className="pt-6 mt-4 border-t border-white/5 flex items-center justify-between gap-3">
                         <a
-                          href="#practice"
+                          href={weekItem.practiceUrl || '#practice'}
+                          {...(weekItem.practiceUrl ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
                           className="inline-flex items-center gap-1 text-xs font-mono font-bold text-[#f5ba13] hover:text-white transition-colors group/link"
                         >
                           <span>Practice</span>
